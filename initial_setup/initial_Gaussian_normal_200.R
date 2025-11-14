@@ -1,9 +1,14 @@
 # Initial setup for simulating influence of margin knowledge on copula 
-# model performance. We simulate from a 2D Gaussian copula and estimate
-# the model parameters with known and unknown margins. Choose a sample
-# size of 200 (N_sim=200) and run 100 Monte Carlo simulations (n=100).
-# Based on the resulting parameter values, we compute the bias, variance
-# and MSE for both cases and conclude the effect of the margin knowledge. 
+# model performance. We simulate from a 2D copula and estimate the 
+# model parameters with known and unknown margins. Choose a sample size 
+# (N_sim) and run 100 Monte Carlo simulations (n=100). Based on the 
+# resulting parameter values, we compute the bias, variance and MSE for 
+# both cases and conclude the effect of the margin knowledge. 
+
+# Configuration
+# Copula Family: Gaussian
+# Marginal Dist: standard Normal
+# Sample Size  : 200
 
 # 1. Load necessary libraries
 # 'copula' is essential for copula definitions, simulation, and fitting.
@@ -132,12 +137,12 @@ plot_density <- ggplot(results_df, aes(x = Estimate, fill = Case)) +
   geom_density(alpha = 0.7) +
   
   # Add a vertical dashed line for the true parameter value
-  geom_vline(xintercept = rho_true, linetype = "dashed", color = "black", linewidth = 1) +
+  geom_vline(xintercept = rho_true, linetype = "dashed", color = "black", size = 1) +
   
   # Add labels and a clean theme
   labs(
     title = "Distribution of Parameter Estimates (n=200, N=100)",
-    x = "Estimated Rho (ρ)",
+    x = "Estimated Rho",
     y = "Density",
     fill = "Estimation Case"
   ) +
@@ -147,6 +152,9 @@ plot_density <- ggplot(results_df, aes(x = Estimate, fill = Case)) +
 # Print the density plot
 print(plot_density)
 
+# Exports the plot to a PDF file named "density_Gaussian_normal_200.pdf"
+ggsave("figs/initial_setup/density_Gaussian_normal_200.png", plot = plot_density, device = "png", width = 8, height = 5)
+
 
 # --- Plot 2: Side-by-Side Boxplots ---
 # This plot is excellent for comparing variance (the height of the boxes)
@@ -155,13 +163,13 @@ plot_boxplot <- ggplot(results_df, aes(x = Case, y = Estimate, fill = Case)) +
   geom_boxplot() +
   
   # Add a horizontal dashed line for the true parameter value
-  geom_hline(yintercept = rho_true, linetype = "dashed", color = "red", linewidth = 1) +
+  geom_hline(yintercept = rho_true, linetype = "dashed", color = "red", size = 1) +
   
   # Add labels and a clean theme
   labs(
     title = "Comparison of Estimator Spread (n=200, N=100)",
     x = "Estimation Case",
-    y = "Estimated Rho (ρ)"
+    y = "Estimated Rho"
   ) +
   theme_bw() +
   # Hide the legend as the x-axis is already descriptive
@@ -169,3 +177,6 @@ plot_boxplot <- ggplot(results_df, aes(x = Case, y = Estimate, fill = Case)) +
 
 # Print the boxplot
 print(plot_boxplot)
+
+# Exports the plot to a PDF file named "boxplot_Gaussian_normal_200.pdf"
+ggsave("figs/initial_setup/boxplot_Gaussian_normal_200.png", plot = plot_boxplot, device = "png", width = 6, height = 5)
