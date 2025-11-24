@@ -1,5 +1,3 @@
-# R Code for Expanded Simulation Framework
-#
 # Investigates the influence of:
 # 1. Copula Family (Normal, t, Gumbel, Clayton)
 # 2. Marginal Distribution (Normal, t, Gamma)
@@ -8,11 +6,6 @@
 #
 # This version uses an 8-scenario "One-Factor-at-a-Time" (OFAT)
 # grid for a fast, intermediate analysis.
-#
-# --- VERSION 2 (Corrected) ---
-# 1. Changed "gaussian" to "normal" to match 'copula' package.
-# 2. Moved iTau() calls inside the if-else block in run_scenario()
-#    to prevent errors with Archimedean families.
 
 # 1. Load Libraries
 library(copula)

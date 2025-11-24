@@ -1,5 +1,3 @@
-# R Code for Expanded Simulation Framework
-#
 # Investigates the influence of:
 # 1. Copula Family (Gaussian, t, Gumbel, Clayton)
 # 2. Marginal Distribution (Normal, t, Gamma)

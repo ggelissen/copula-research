@@ -1,17 +1,15 @@
-# R Code for Convergence Analysis (n=10 to 1000)
-#
-# This script performs a high-resolution analysis of the effect
+# This script performs an analysis of the effect
 # of sample size (n) on estimator MSE and MSE Inflation for
 # a single, baseline scenario: Normal Copula + Normal Margins.
 
-# 1. Load Libraries
+# Load Libraries
 library(copula)
 library(stats)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
 
-# --- 2. Global Simulation Parameters ---
+# --- Global Simulation Parameters ---
 N_sim <- 100         # Monte Carlo replications
 TRUE_TAU <- 1/3     # True Kendall's tau (constant across families)
 
@@ -21,7 +19,7 @@ T_MARGIN_DF <- 3
 GAMMA_MARGIN_SHAPE <- 2
 GAMMA_MARGIN_RATE <- 1
 
-# --- 3. Parameter Grid ---
+# --- Parameter Grid ---
 # Create a high-resolution grid of n_obs values
 n_values <- seq(50, 1000, by = 50)
 
@@ -37,11 +35,11 @@ cat("Scenarios to run:", nrow(param_grid), "\n")
 cat("This will take a significant amount of time (est. 20-30 min).\n")
 
 
-# --- 4. Main Simulation Function (Identical to V3) ---
+# --- Main Simulation Function (Identical to V3) ---
 
 run_scenario <- function(N_sim, n_obs, family, margins, true_tau) {
   
-  # --- 4.1. Define Copula ---
+  # --- Define Copula ---
   if (family == "normal") {
     true_param <- iTau(ellipCopula("normal"), true_tau)
     copula_obj <- normalCopula(dim = 2, param = true_param, dispstr = "un")
@@ -56,7 +54,7 @@ run_scenario <- function(N_sim, n_obs, family, margins, true_tau) {
     copula_obj <- claytonCopula(dim = 2, param = true_param)
   }
 
-  # --- 4.2. Define Margins & MVDC ---
+  # --- Define Margins & MVDC ---
   if (margins == "norm") {
     margin_names <- c("norm", "norm")
     margin_params <- list(list(mean = 0, sd = 1), list(mean = 0, sd = 1))
@@ -81,13 +79,13 @@ run_scenario <- function(N_sim, n_obs, family, margins, true_tau) {
   est_param_known <- numeric(N_sim)
   est_param_unknown <- numeric(N_sim)
 
-  # --- 4.3. Run N_sim loops ---
+  # --- Run N_sim loops ---
   for (i in 1:N_sim) {
     X_data <- rMvdc(n_obs, true_mvdc)
     U_known <- p_margin_fn(X_data)
     U_unknown <- pobs(X_data)
     
-    # --- 4.4. Fit Copulas ---
+    # --- Fit Copulas ---
     if (family == "normal") { 
       fit_cop_obj <- normalCopula(dim = 2, dispstr = "un")
     } else if (family == "t") {
@@ -109,7 +107,7 @@ run_scenario <- function(N_sim, n_obs, family, margins, true_tau) {
     } else { est_param_unknown[i] <- NA }
   }
   
-  # --- 4.5. Calculate and return metrics ---
+  # --- Calculate and return metrics ---
   est_param_known <- na.omit(est_param_known)
   est_param_unknown <- na.omit(est_param_unknown)
   
@@ -125,7 +123,7 @@ run_scenario <- function(N_sim, n_obs, family, margins, true_tau) {
 }
 
 
-# --- 5. Run the Full Experiment ---
+# --- Run the Experiment ---
 
 # Initialize list to store results
 results_list <- vector("list", nrow(param_grid))
@@ -155,15 +153,15 @@ cat("\nSimulation complete.\n")
 # Combine all results into one master data.frame
 results_df <- do.call(rbind, results_list)
 
-# --- 6. Process and Plot Results ---
+# --- Process and Plot Results ---
 
-# 6.1. Create 'MSE_Inflation' metric
+# Create 'MSE_Inflation' metric
 results_df <- results_df %>%
   mutate(
     MSE_Inflation = mse_unknown / mse_known
   )
 
-# 6.2. Pivot for plotting
+# Pivot for plotting
 results_long_mse <- results_df %>%
   select(n_obs, family, margins, mse_known, mse_unknown) %>%
   pivot_longer(
@@ -175,7 +173,7 @@ results_long_mse <- results_df %>%
   mutate(Case = factor(Case, levels = c("known", "unknown")))
 
 
-# --- Plot 1: Absolute MSE Decay (Log Scale) ---
+# --- Absolute MSE Decay (Log Scale) ---
 gg_mse_decay <- ggplot(results_long_mse, aes(x = n_obs, y = MSE, color = Case)) +
   geom_line(size = 1) +
   geom_point(alpha = 0.5) +
@@ -195,7 +193,7 @@ gg_mse_decay <- ggplot(results_long_mse, aes(x = n_obs, y = MSE, color = Case)) 
 print(gg_mse_decay)
 
 
-# --- Plot 2: Relative Cost (MSE Inflation) Decay ---
+# --- Relative Cost (MSE Inflation) Decay ---
 gg_cost_decay <- ggplot(results_df, aes(x = n_obs, y = MSE_Inflation)) +
   geom_line(size = 1, color = "blue") +
   geom_point(alpha = 0.5, color = "blue") +

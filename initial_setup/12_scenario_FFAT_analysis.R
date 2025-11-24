@@ -1,5 +1,3 @@
-# R Code for Full Factorial 2D Analysis
-#
 # This script replaces the two old OFAT bar charts with a
 # single, definitive Full Factorial experiment.
 #
