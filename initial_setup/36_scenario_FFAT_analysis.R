@@ -12,14 +12,14 @@ library(dplyr)
 library(tidyr)
 
 # --- 2. Global Simulation Parameters ---
-N_sim <- 100         # Monte Carlo replications (set >1000 for paper)
+N_sim <- 10         # Monte Carlo replications (set >1000 for paper)
 TRUE_TAU <- 1/3     # True Kendall's tau (constant across families)
 
 # --- 3. Parameter Grids ---
 param_grid <- expand.grid(
   n_obs = c(50, 200, 1000),
-  family = factor(c("gaussian", "t", "gumbel", "clayton")),
-  margins = factor(c("norm", "t", "gamma")),
+  family = c("gaussian", "t", "gumbel", "clayton"),
+  margins = c("norm", "t", "gamma"),
   stringsAsFactors = FALSE
 )
 
@@ -50,18 +50,41 @@ run_scenario <- function(N_sim, n_obs, family, margins, true_tau) {
   
   # --- 4.1. Define Copula ---
   # Get the true parameter (rho or theta) from tau
-  true_param <- iTau(ellipCopula(family), true_tau) # for gaussian/t
-  
+
+  # brief: convert factor -> character and pick correct copula
+  fam <- as.character(family)
+
+  # Compute theta / construct copula safely by family
+  if (fam %in% c("gaussian", "normal")) {
+    cop <- copula::ellipCopula("normal", dim = 2)
+    theta <- copula::iTau(cop, true_tau)
+    cop <- copula::ellipCopula("normal", dim = 2, param = theta)
+  } else if (fam == "t") {
+    cop <- copula::ellipCopula("t", dim = 2, df = T_COPULA_DF)
+    theta <- copula::iTau(cop, true_tau)
+    cop <- copula::ellipCopula("t", dim = 2, df = T_COPULA_DF, param = theta)
+  } else if (fam == "gumbel") {
+    # tau = 1 - 1/theta  => theta = 1 / (1 - tau)
+    theta <- 1 / (1 - true_tau)
+    cop <- copula::gumbelCopula(theta, dim = 2)
+  } else if (fam == "clayton") {
+    # tau = theta / (theta + 2) => theta = 2*tau / (1 - tau)
+    theta <- 2 * true_tau / (1 - true_tau)
+    cop <- copula::claytonCopula(theta, dim = 2)
+  } else {
+    stop("unknown copula family: ", fam)
+  }
+
   if (family == "gaussian") {
-    copula_obj <- normalCopula(dim = 2, param = true_param, dispstr = "un")
+    copula_obj <- normalCopula(dim = 2, param = theta, dispstr = "un")
   } else if (family == "t") {
-    copula_obj <- tCopula(dim = 2, param = true_param, df = T_COPULA_DF, dispstr = "un")
+    copula_obj <- tCopula(dim = 2, param = theta, df = T_COPULA_DF, dispstr = "un")
   } else if (family == "gumbel") {
-    true_param <- iTau(gumbelCopula(1), true_tau) # param > 1
-    copula_obj <- gumbelCopula(dim = 2, param = true_param)
+    theta <- iTau(gumbelCopula(2), true_tau) # param > 1
+    copula_obj <- gumbelCopula(dim = 2, param = theta)
   } else if (family == "clayton") {
-    true_param <- iTau(claytonCopula(1), true_tau) # param > 0
-    copula_obj <- claytonCopula(dim = 2, param = true_param)
+    theta <- iTau(claytonCopula(2), true_tau) # param > 0
+    copula_obj <- claytonCopula(dim = 2, param = theta)
   }
 
   # --- 4.2. Define Margins & MVDC ---
@@ -148,13 +171,13 @@ run_scenario <- function(N_sim, n_obs, family, margins, true_tau) {
   # not tau, as this is what was directly estimated.
   
   metrics <- data.frame(
-    bias_known     = mean(est_param_known) - true_param,
+    bias_known     = mean(est_param_known) - theta,
     var_known      = var(est_param_known),
-    mse_known      = mean((est_param_known - true_param)^2),
+    mse_known      = mean((est_param_known - theta)^2),
     
-    bias_unknown   = mean(est_param_unknown) - true_param,
+    bias_unknown   = mean(est_param_unknown) - theta,
     var_unknown    = var(est_param_unknown),
-    mse_unknown    = mean((est_param_unknown - true_param)^2)
+    mse_unknown    = mean((est_param_unknown - theta)^2)
   )
   
   return(metrics)
@@ -235,6 +258,8 @@ gg_effect_n <- ggplot(plot_data_n, aes(x = Case, y = MSE, fill = Case)) +
   theme_bw()
 
 print(gg_effect_n)
+ggsave("figs/initial_setup/36_scenario/36_scenario_sample_size.png", plot = gg_effect_n)
+ggsave("figs/initial_setup/36_scenario/36_scenario_sample_size.pdf", plot = gg_effect_n)
 
 # --- Plot 1b: MSE Inflation vs Sample Size (n) ---
 plot_data_n_inf <- results_df %>%
@@ -253,6 +278,8 @@ gg_effect_n_inf <- ggplot(plot_data_n_inf, aes(x = n_obs, y = MSE_Inflation)) +
   theme_bw()
 
 print(gg_effect_n_inf)
+ggsave("figs/initial_setup/36_scenario/36_scenario_sample_size_inflation.png", plot = gg_effect_n_inf)
+ggsave("figs/initial_setup/36_scenario/36_scenario_sample_size_inflation.pdf", plot = gg_effect_n_inf)
 
 
 # --- Plot 2: Effect of Copula Family ---
@@ -271,6 +298,8 @@ gg_effect_fam <- ggplot(plot_data_fam, aes(x = Case, y = MSE, fill = Case)) +
   theme_bw()
 
 print(gg_effect_fam)
+ggsave("figs/initial_setup/36_scenario/36_scenario_family.png", plot = gg_effect_fam)
+ggsave("figs/initial_setup/36_scenario/36_scenario_family.pdf", plot = gg_effect_fam)
 
 # --- Plot 2b: MSE Inflation vs Copula Family ---
 plot_data_fam_inf <- results_df %>%
@@ -288,6 +317,8 @@ gg_effect_fam_inf <- ggplot(plot_data_fam_inf, aes(x = family, y = MSE_Inflation
   theme(legend.position = "none")
 
 print(gg_effect_fam_inf)
+ggsave("figs/initial_setup/36_scenario/36_scenario_family_inflation.png", plot = gg_effect_fam_inf)
+ggsave("figs/initial_setup/36_scenario/36_scenario_family_inflation.pdf", plot = gg_effect_fam_inf)
 
 
 # --- Plot 3: Effect of Marginal Distribution ---
@@ -306,6 +337,8 @@ gg_effect_mar <- ggplot(plot_data_mar, aes(x = Case, y = MSE, fill = Case)) +
   theme_bw()
 
 print(gg_effect_mar)
+ggsave("figs/initial_setup/36_scenario/36_scenario_margin.png", plot = gg_effect_mar)
+ggsave("figs/initial_setup/36_scenario/36_scenario_margin.pdf", plot = gg_effect_mar)
 
 # --- Plot 3b: MSE Inflation vs Marginal Distribution ---
 plot_data_mar_inf <- results_df %>%
@@ -323,3 +356,7 @@ gg_effect_mar_inf <- ggplot(plot_data_mar_inf, aes(x = margins, y = MSE_Inflatio
   theme(legend.position = "none")
 
 print(gg_effect_mar_inf)
+ggsave("figs/initial_setup/36_scenario/36_scenario_margin_inflation.png", plot = gg_effect_mar_inf)
+ggsave("figs/initial_setup/36_scenario/36_scenario_margin_inflation.pdf", plot = gg_effect_mar_inf)
+
+saveRDS(results_df, "figs/initial_setup/36_scenario/36_scenario_results.rds")

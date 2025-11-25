@@ -191,6 +191,8 @@ gg_plot1 <- ggplot(results_df, aes(x = family, y = MSE_Inflation, fill = margins
   theme(legend.position = "bottom")
 
 print(gg_plot1)
+ggsave("figs/initial_setup/12_scenario/12_scenario_copula_family.png", plot = gg_plot1)
+ggsave("figs/initial_setup/12_scenario/12_scenario_copula_family.pdf", plot = gg_plot1)
 
 
 # --- Plot 2: Effect of Marginal Distribution (Grouped Bar Chart) ---
@@ -208,6 +210,8 @@ gg_plot2 <- ggplot(results_df, aes(x = margins, y = MSE_Inflation, fill = family
   theme(legend.position = "bottom")
 
 print(gg_plot2)
+ggsave("figs/initial_setup/12_scenario/12_scenario_marginal_distribution.png", plot = gg_plot2)
+ggsave("figs/initial_setup/12_scenario/12_scenario_marginal_distribution.pdf", plot = gg_plot2)
 
 
 # --- Plot 3: Interaction Heatmap (The Best Visualization) ---
@@ -232,3 +236,7 @@ gg_plot3 <- ggplot(results_df, aes(x = family, y = margins, fill = MSE_Inflation
   theme(legend.position = "right")
 
 print(gg_plot3)
+ggsave("figs/initial_setup/12_scenario/12_scenario_interaction_heatmap.png", plot = gg_plot3)
+ggsave("figs/initial_setup/12_scenario/12_scenario_interaction_heatmap.pdf", plot = gg_plot3)
+
+saveRDS(results_df, "figs/initial_setup/12_scenario/12_scenario_results.rds")

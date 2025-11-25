@@ -191,6 +191,8 @@ gg_mse_decay <- ggplot(results_long_mse, aes(x = n_obs, y = MSE, color = Case)) 
   theme(legend.position = "bottom")
 
 print(gg_mse_decay)
+ggsave("figs/initial_setup/effect_sample_size/sample_size_simple_mse_decay.png", plot = gg_mse_decay)
+ggsave("figs/initial_setup/effect_sample_size/sample_size_simple_mse_decay.pdf", plot = gg_mse_decay)
 
 
 # --- Relative Cost (MSE Inflation) Decay ---
@@ -211,6 +213,7 @@ gg_cost_decay <- ggplot(results_df, aes(x = n_obs, y = MSE_Inflation)) +
   theme_bw()
 
 print(gg_cost_decay)
+ggsave("figs/initial_setup/effect_sample_size/sample_size_simple_inflation.png", plot = gg_cost_decay)
+ggsave("figs/initial_setup/effect_sample_size/sample_size_simple_inflation.pdf", plot = gg_cost_decay)
 
-
-
+saveRDS(results_df, "figs/initial_setup/effect_sample_size/sample_size_simple_results.rds")
